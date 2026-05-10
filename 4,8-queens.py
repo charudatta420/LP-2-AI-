@@ -1,59 +1,115 @@
-
 import heapq
 
+# ---------- Check Safe Position ----------
 def is_safe(board, row, col):
-    """
-    Checks if it's safe to place a queen at (row, col).
-    board stores previous queen positions as [row0, row1, row2...]
-    """
+
     for prev_col, prev_row in enumerate(board):
-        # Check horizontal row and both diagonals
-        if prev_row == row or abs(prev_row - row) == abs(prev_col - col):
+
+        # Same row
+        if prev_row == row:
             return False
+
+        # Same diagonal
+        if abs(prev_row - row) == abs(prev_col - col):
+            return False
+
     return True
 
+
+# ---------- Heuristic Function h(n) ----------
+# Estimate remaining queens to place
+def heuristic(board, n):
+
+    return n - len(board)
+
+
+# ---------- Cost Function g(n) ----------
+# Number of queens already placed
+def cost(board):
+
+    return len(board)
+
+
+# ---------- A* Algorithm ----------
 def solve_n_queens_astar(n):
-    # Priority Queue stores: (priority, current_column, board_state)
-    # We prioritize states with more queens (lower n - len)
-    pq = [(n, 0, [])]
+
+    # Priority Queue stores:
+    # (f(n), g(n), column, board)
+
+    pq = []
+
+    initial_board = []
+
+    g = cost(initial_board)
+
+    h = heuristic(initial_board, n)
+
+    f = g + h
+
+    heapq.heappush(pq, (f, g, 0, initial_board))
+
     solutions = []
 
     while pq:
-        priority, col, board = heapq.heappop(pq)
 
-        # Goal state reached
+        f, g, col, board = heapq.heappop(pq)
+
+        # Goal State
         if col == n:
+
             solutions.append(board)
+
             continue
 
-        # Try placing a queen in every row of the current column
+        # Try all rows in current column
         for row in range(n):
+
             if is_safe(board, row, col):
+
                 new_board = board + [row]
-                # Push the new state to the queue
-                heapq.heappush(pq, (n - len(new_board), col + 1, new_board))
+
+                new_g = cost(new_board)
+
+                new_h = heuristic(new_board, n)
+
+                new_f = new_g + new_h
+
+                heapq.heappush(
+                    pq,
+                    (new_f, new_g, col + 1, new_board)
+                )
 
     return solutions
 
-def print_grid(solution, n):
-    """Prints the board in a visual grid format."""
+
+# ---------- Print Board ----------
+def print_board(solution, n):
+
     for row in range(n):
-        line = ""
+
         for col in range(n):
-            # Check if the queen in this column is at the current row
+
             if solution[col] == row:
-                line += "Q "
+                print("Q", end=" ")
+
             else:
-                line += ". "
-        print(line)
-    print("-" * (n * 2))
+                print(".", end=" ")
 
-# --- Execution ---
-n = int(input("Enter N for A*: "))
-results = solve_n_queens_astar(n)
+        print()
 
-print(f"\nFound {len(results)} total solutions.\n")
+    print("-" * (2 * n))
 
-for i, sol in enumerate(results):
-    print(f"Solution {i+1}:")
-    print_grid(sol, n)
+
+# ---------- Main ----------
+n = int(input("Enter value of N: "))
+
+solutions = solve_n_queens_astar(n)
+
+print("\nTotal Solutions Found:", len(solutions))
+print()
+
+for i, sol in enumerate(solutions):
+
+    print(f"Solution {i + 1}:\n")
+
+    print_board(sol, n)
